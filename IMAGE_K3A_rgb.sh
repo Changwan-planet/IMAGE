@@ -18,10 +18,10 @@ echo "YOUR FILE NAME: $word"
 fn=$word
 
 fn2="test"
-ext=".TIF"
-ext2=".TIF "
+ext=".tif"
+ext2=".tif "
 
-echo $path$fn\2$ext
+echo $path$fn\_B$ext
 
 ##gdal_translate -of JPEG -co QUALITY=90 -co PROGRESSIVE=ON -outsize 1400 1400 -r bilinear \
 ##$path$fn\2$ext test.jpg 
@@ -34,17 +34,19 @@ echo $path$fn\2$ext
 #quick and shapren as an additional step. 
 
 
-#RGB COMPOSITION
-gdal_merge.py -o $path2$fn2\_rgb3$ext -separate $path$fn\2$ext2\
-$path$fn\3$ext2 $path$fn\4$ext2\
+echo RGB COMPOSITION
+#BGRN -> sequence along the wavelength
+gdal_merge.py -o $path2$fn2\_rgb3$ext -separate $path$fn\_B$ext2\
+$path$fn\_G$ext2 $path$fn\_R$ext2\
 -co PHOTOMETRIC=RGB -co COMPRESS=DEFLATE
 
 #"-separate" : followed by the filenames for the bands we want
 #"-c PHOTOMETRIC=RGB : interpret the colors correctly
 #"-c COMPRESS=DEFLATE : is as small as possible without throwing away any data
 
+xdg-open $path2$fn2\_rgb3$ext
 
-#REORDER THE BANDS
+echo REORDER THE BANDS
 gdal_translate $path2$fn2\_rgb3$ext2 $path2$fn2\_rgb4$ext2 -b 3 -b 2 -b 1 \
 -co COMPRESS=DEFLATE -co PHOTOMETRIC=RGB
 
@@ -52,11 +54,14 @@ gdal_translate $path2$fn2\_rgb3$ext2 $path2$fn2\_rgb4$ext2 -b 3 -b 2 -b 1 \
 #blue (instead of an alpha channel of something).
 
 
+xdg-open $path2$fn2\_rgb4$ext2
+
+echo MIN_MAX
 #AWK CODE
 #FIND THE MAX AND MIN VALUES IN THE TIFF FILE
-zMin=`gdalinfo -mm ./test_rgb4.TIF | sed -ne 's/.*Computed Min\/Max=//p'| tr -d ' ' | cut -d "," -f 1 | cut -d . -f 1`
+zMin=`gdalinfo -mm ./test_rgb4$ext2 | sed -ne 's/.*Computed Min\/Max=//p'| tr -d ' ' | cut -d "," -f 1 | cut -d . -f 1`
 
-zMax=`gdalinfo -mm ./test_rgb4.TIF | sed -ne 's/.*Computed Min\/Max=//p'| tr -d ' ' | cut -d "," -f 2 | cut -d . -f 1`
+zMax=`gdalinfo -mm ./test_rgb4$ext2 | sed -ne 's/.*Computed Min\/Max=//p'| tr -d ' ' | cut -d "," -f 2 | cut -d . -f 1`
 
 echo $zMin $zMax > min_max.txt
 
@@ -70,9 +75,9 @@ print max}' min_max.txt`
 Min=`awk '{min = $1; {for (i=1; i<=NF; i++) {if ($i < min) min=$i }};\
 print min}' min_max.txt`
 
-echo $Max $Min
+echo $Min $Max
 
-#ALGORITHMIC IMAGE ENHANCEMENT
+echo ALGORITHMIC IMAGE ENHANCEMENT
 gdal_translate $path2$fn2\_rgb4$ext2 $path2$fn2\_scaled4$ext2 -scale $Min $Max 0 65535 \
 -exponent 1 -co COMPRESS=DEFLATE -co PHOTOMETRIC=RGB 
 
@@ -81,13 +86,19 @@ gdal_translate $path2$fn2\_rgb4$ext2 $path2$fn2\_scaled4$ext2 -scale $Min $Max 0
 #"-exponent 0.5" : raise each band to the power of 1/2(square root) 
 #It's a quick and dirty way to get a preview image.
 
-#ALPAH BAND
+xdg-open $path2$fn2\_scaled4$ext2
+
+
+#echo WARP TO THE UTM PROJECTION
+#gdalwarp -t_srs '+proj=utm +zone=48 +datum=WGS84' -to SRC_METHOD=NO_GEOTRANSFORM $path2$fn2\_scaled4$ext2 $path2$fn2\_out2$ext2
+
+echo ALPAH BAND
 #CREATE AN OUTPUT ALPHA BAND IDENTIFY NODATA (UNSET/TRANSPARENTS) PIXELS
 #YOU SHOULD CHANGE THE FILE NAME AS NEW ONE
-gdalwarp -srcnodata 0 -dstalpha $path2$fn2\_scaled4$ext2 $path2$fn2\_out2$ext2
+gdalwarp -srcnodata 0 -dstalpha $path2$fn2\_out2$ext2 $path2$fn2\_out3$ext2
 
 
-
+xdg-open $path$fn2\_out3$ext2
 
 #MOSAIC MULTIPLE RASTER DATASET
 ##gdal_merge.py -o test_merged.TIF test_merge1.TIF test_merge2.TIF
