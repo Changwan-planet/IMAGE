@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 fp_r="/home/changwan/IMAGE/K3A_20200323060952_27569_00037135_L1R_R.tif"
 fp_g="/home/changwan/IMAGE/K3A_20200323060952_27569_00037135_L1R_G.tif"
 fp_b="/home/changwan/IMAGE/K3A_20200323060952_27569_00037135_L1R_B.tif"
-#fp_n="/home/changwan/IMAGE/K3A_20200323060952_27569_00037135_L1R_N.tif"
+fp_n="/home/changwan/IMAGE/K3A_20200323060952_27569_00037135_L1R_N.tif"
 
 
 #print(fp)
@@ -50,13 +50,13 @@ def norm(band):
 b_r = gdal.Open(fp_r)
 b_g = gdal.Open(fp_g)
 b_b = gdal.Open(fp_b)
-#b_n = gdal.Open(fp_n)
+b_n = gdal.Open(fp_n)
 
 #Call the norm function on each band as array converted to float          
 b_r = norm(b_r.ReadAsArray().astype(float))
 b_g = norm(b_g.ReadAsArray().astype(float))
 b_b = norm(b_b.ReadAsArray().astype(float))
-#b_n = norm(b_n.ReadAsArray().astype(float))
+b_n = norm(b_n.ReadAsArray().astype(float))
 
 
 np.seterr(divide='ignore', invalid='ignore')
@@ -87,9 +87,8 @@ for x in x_r:
 #Create RGB
 RGB = np.dstack((b_b,b_g,b_r))
 
-
-
-# Visualize RGB
+# Visualize Band Ratio
+"""
 #plt.imshow(b_n[1000:3000,1000:3000], cmap='RdBu_r')
 plt.subplot(2, 1, 1)
 plt.imshow(b_ratio[1000:3000,1000:3000], cmap='RdBu_r')
@@ -100,8 +99,57 @@ plt.subplot(2, 1, 2)
 plt.imshow(RGB[1000:3000,1000:3000])
 
 plt.tight_layout()
-plt.show()    
-    
+plt.show()     
+"""
+
+#Visualizea
+"""
+sx = 4000
+sy = 4000
+ex = 4000
+ey = 4000
+x = np.arange(0,1,0.1)
+plt.scatter(b_n[sx:ex,sy:ey], b_r[sx:ex,sy:ey], marker = '+', color = "red")
+plt.scatter(b_b[sx:ex,sy:ey], b_r[sx:ex,sy:ey], marker = '+', color = "blue")
+plt.scatter(b_g[sx:ex,sy:ey], b_r[sx:ex,sy:ey], marker = '+', color = "green")
+plt.plot(x,x, color = 'black')
+
+
+#plt.subplot(1,3,1)
+#plt.scatter(b_b,b_r)
+#plt.title('B/R')
+#plt.subplot(1,3,2)
+#plt.scatter(b_g,b_r)
+#plt.title('G/R')
+#plt.subplot(1,3,3)
+#plt.scatter(b_n,b_r)
+#plt.title('N/R')
+"""
+
+px = 1 
+py = 1 
+
+spectra = np.zeros([x, xx])
+ss = range(0, 4, 1)
+print(ss)
+for x in x_r:
+ for s in ss:   
+  spectra[s,x] = b_b[s, x] 
+  spectra[s,x] = b_g[s, x] 
+  spectra[s,x] = b_r[s, x]
+  spectra[s,x] = b_n[s, x]
+
+print(spectra[0:4,1000])
+
+xt = [450, "520-600", "630-690", "760-900"]
+#default_xticks = range(len(xt))
+default_xticks = range(450,900,10)
+
+
+plt.plot(spectra[0:4,1000:1010], marker='+')
+plt.xticks(default_xticks,xt)
+plt.show()
+
 """
     # Export RGB as TIFF file
     # Important: Here is where you can set the custom stretch
